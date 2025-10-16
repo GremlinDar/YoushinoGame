@@ -1,17 +1,23 @@
 using UnityEngine;
 
-public class Wapon : MonoBehaviour
+public class Weapon : MonoBehaviour
 {
     public Transform firePoint;
     public GameObject bullet;
-    public float offsetDistance = 0.5f; // Дистанция от центра игрока
+    public float offsetDistance = 0.5f; 
     
+    private Camera mainCamera;
     private Vector3 baseOffset;
 
     void Start()
     {
-        
+        mainCamera = Camera.main;
         baseOffset = firePoint.localPosition;
+    }
+
+    void Awake()
+    {
+        Cursor.visible = false;
     }
 
     void Update()
@@ -26,12 +32,18 @@ public class Wapon : MonoBehaviour
     
     void UpdateFirePointPosition()
     {
+        float playerDirection;
         Vector2 shootDirection = GetShootDirection();
-        
+        if (transform.localScale.x > 0)
+        {
+            playerDirection = 1;
+        }
+        else
+        {
+            playerDirection = -1;
+        }
 
-        float playerDirection = transform.localScale.x > 0 ? 1f : -1f;
-        
-        Vector3 newPosition = Vector3.zero;
+            Vector3 newPosition = Vector3.zero;
         
         if (shootDirection != Vector2.zero)
         {
@@ -43,7 +55,6 @@ public class Wapon : MonoBehaviour
         }
         else
         {
-
             newPosition = new Vector3(
                 offsetDistance * playerDirection,
                 0,
@@ -65,14 +76,11 @@ public class Wapon : MonoBehaviour
     
     Vector2 GetShootDirection()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-    
-        if (horizontal == 0 && vertical == 0)
-        {
-            return Vector2.right * (transform.localScale.x > 0 ? 1 : -1);
-        }
+        Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0f;
         
-        return new Vector2(horizontal, vertical).normalized;
+        Vector2 direction = (mousePosition - transform.position).normalized;
+        
+        return direction;
     }
 }
