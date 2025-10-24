@@ -1,9 +1,9 @@
 using UnityEngine;
 
-public class AimScreept : MonoBehaviour
+public class Aim : MonoBehaviour
 {
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Avake()
+    void Awake()
     {
         Cursor.visible = false;
     }
