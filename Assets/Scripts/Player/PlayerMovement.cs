@@ -3,16 +3,42 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float speed = 5f;
-    private Rigidbody2D rb;
+    
     private Vector2 moveVelocity;
     private bool facingRight = true;
+    private Camera mainCamera;
     
-    // Добавляем публичное свойство для направления
     public bool IsFacingRight { get { return facingRight; } }
+
+    // Добавляем ссылку на контейнер для всех объектов, которые должны поворачиваться
+    [SerializeField] private Transform visualsContainer;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        mainCamera = Camera.main;
+        
+        // Если не назначен вручную, находим автоматически
+        if (visualsContainer == null)
+        {
+            visualsContainer = transform.Find("Visuals");
+            if (visualsContainer == null)
+            {
+                // Создаем контейнер автоматически
+                visualsContainer = new GameObject("Visuals").transform;
+                visualsContainer.SetParent(transform);
+                visualsContainer.localPosition = Vector3.zero;
+                
+                // Перемещаем все дочерние объекты (кроме камеры) в контейнер
+                foreach (Transform child in transform)
+                {
+                    if (child != visualsContainer && !child.GetComponent<Camera>())
+                    {
+                        child.SetParent(visualsContainer);
+                    }
+                }
+            }
+        }
     }
 
     void Update()
@@ -20,15 +46,7 @@ public class PlayerMovement : MonoBehaviour
         Vector2 moveInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         moveVelocity = moveInput.normalized * speed;
 
-        // Проверяем изменение направления по горизонтали
-        if (moveInput.x > 0 && !facingRight)
-        {
-            Flip();
-        }
-        else if (moveInput.x < 0 && facingRight)
-        {
-            Flip();
-        }
+        RotateTowardsMouse();
     }
 
     void FixedUpdate()
@@ -36,13 +54,29 @@ public class PlayerMovement : MonoBehaviour
         rb.MovePosition(rb.position + moveVelocity * Time.fixedDeltaTime);
     }
 
+    void RotateTowardsMouse()
+    {
+        Vector3 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0f;
+
+        Vector2 direction = (mousePos - transform.position).normalized;
+
+        bool shouldFaceRight = direction.x >= 0;
+
+        if (shouldFaceRight != facingRight)
+        {
+            Flip();
+        }
+    }
+
     void Flip()
     {
         facingRight = !facingRight;
         
-        // Исправляем поворот для 2D
-        Vector3 scale = transform.localScale;
-        scale.x *= -1;
-        transform.localScale = scale;
+        // Поворачиваем только контейнер с визуальными элементами, а не всего игрока
+        if (visualsContainer != null)
+        {
+            visualsContainer.Rotate(0f, 180f, 0f);
+        }
     }
 }
